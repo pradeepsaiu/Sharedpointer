@@ -1,13 +1,12 @@
 all:	SharedPtr.hpp 
 	g++ test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
 	./out
-	rm out
 debug:	
-	g++ -g test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	g++ -g ptr_test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
 	gdb ./out
 
 valgrind:
-	g++ test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	g++ ptr_test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
 	valgrind ./out	
 
 valgrind_detail:
@@ -17,3 +16,7 @@ valgrind_detail:
 test:
 	g++ ptr_test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
 	./out
+clang:	SharedPtr.hpp 
+	clang++ ptr_test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	./out
+

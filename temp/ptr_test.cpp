@@ -145,7 +145,7 @@ class Derived : public Base1 {
         Derived(const Derived &); // Disallow.
         Derived &operator=(const Derived &); // Disallow.
     public:
-        ~Derived() {
+        virtual ~Derived() {
             printf("Derived::~Derived()\n");
             derived_destructor_called = true;
         }
@@ -261,7 +261,7 @@ class Derived_vi : public virtual Base1_vi, public Base2_vi {
 
 void basic_tests_1() {
 
-    size_t base = AllocatedSpace;
+//    size_t base = AllocatedSpace;
 /*
     // Test deleting through original class.----doesn't work failed to convert derived to base
     {
@@ -280,11 +280,12 @@ void basic_tests_1() {
                 SharedPtr<Derived> sp(new Derived);
                 // Test template copy constructor.
                 SharedPtr<Base1> sp3(sp);
+		assert( (*(sp3.data->ref_count)) == 2);
                 sp2 = sp;
                 sp2 = sp2;
             }
         }
-    }*/
+    }
 	 // Test copy constructor and template copy constructor.
     {
         {
@@ -307,12 +308,119 @@ void basic_tests_1() {
         }
         {
             SharedPtr<Derived> sp(new Derived);
-//            SharedPtr<Base1> sp2;
- //           sp2 = sp;
- //           sp2 = sp2; // Self assignment.
- //           sp2 = sp;
-  //          sp = sp;
+            SharedPtr<Base1> sp2;
+            sp2 = sp;
+            sp2 = sp2; // Self assignment.
+            sp2 = sp;
+            sp = sp;
         }
     }
-    printf("Basic tests 1 passed.\n");
+*/
+/*
+//	Test Reset
+   {
+	{
+	SharedPtr<Derived> sp(new Derived);
+            SharedPtr<Base1> sp2;
+            sp2 = sp;
+            sp2 = sp2;
+            sp.reset();
+            sp.reset(new Derived);
+            SharedPtr<Base1> sp3(sp2);
+        }
+        // Need to make sure that it's the reset that
+        // is forcing the object to be deleted, and
+        // not the smart pointer destructor.
+        {
+            SharedPtr<Derived> sp(new Derived);
+            char *buf = (char *) ::operator new(sizeof(SharedPtr<Base1>));
+            SharedPtr<Base1> &sp2 = *(new (buf) SharedPtr<Base1>());
+            sp2 = sp;
+            sp2 = sp2;
+            sp.reset();
+            sp2.reset();
+            ::operator delete(buf);
+        }
+    }
+*/
+    // Test *.
+    {
+        SharedPtr<Derived> sp(new Derived);
+        (*sp).value = 1234;
+
+        SharedPtr<const Derived> sp2(sp);
+        int i = (*sp2).value;
+	assert(i == 1234);
+       // (*sp2).value = 567; // Should give a syntax error if uncommented.
+    }
+
+    // Test ->.
+    {
+        SharedPtr<Derived> sp(new Derived);
+        sp->value = 1234;
+
+        SharedPtr<const Derived> sp2(sp);
+        int i = sp2->value;
+        assert(i == 1234);
+        //sp2->value = 567; // Should give a syntax error if uncommented.
+    }
+
+    // Test get().
+    {
+        SharedPtr<Derived> sp(new Derived);
+        sp.get()->value = 1234;
+
+        SharedPtr<const Derived> sp2(sp);
+        int i = sp2.get()->value;
+        assert(i == 1234);
+    }
+
+    // Test bool.
+    {
+        SharedPtr<Derived> sp(new Derived);
+        assert(sp);
+        sp.reset();
+        assert(!sp);
+
+        SharedPtr<Derived> sp2;
+
+       //  int i = sp; // Must give syntax error.
+       //  delete sp; // Must give syntax error.
+    }
+/*
+    // Test ==.
+    {
+        SharedPtr<Derived> sp(new Derived);
+        SharedPtr<Derived> sp2(sp);
+        SharedPtr<Derived> sp3;
+	
+
+        assert(sp2 == sp);
+        assert(!(sp2 == sp3));
+        sp3.reset(new Derived);
+        assert(!(sp2 == sp3));
+    }*/
+
+    // Test static_pointer_cast.
+    {
+        SharedPtr<Derived> sp(new Derived);
+        SharedPtr<Base1> sp2(sp);
+
+//         SharedPtr<Derived> sp3(sp2); // Should give a syntax error.
+       SharedPtr<Derived> sp3(static_pointer_cast<Derived>(sp2));
+//         SharedPtr<Derived> sp4(dynamic_pointer_cast<Derived>(sp2)); // Should give syntax error about polymorphism.
+    }
+/*
+    // Test dynamic_pointer_cast.
+    {
+        SharedPtr<Derived_polymorphic> sp(new Derived_polymorphic);
+        SharedPtr<Base_polymorphic> sp2(sp);
+
+        // SharedPtr<Derived_polymorphic> sp3(sp2); // Should give a syntax error.
+        SharedPtr<Derived_polymorphic> sp3(dynamic_pointer_cast<Derived_polymorphic>(sp2));
+        SharedPtr<Derived_polymorphic> sp4(static_pointer_cast<Derived_polymorphic>(sp2));
+        SharedPtr<Derived2_polymorphic> sp5(dynamic_pointer_cast<Derived2_polymorphic>(sp2));
+        assert(!sp5);
+    }*/
+
 }
